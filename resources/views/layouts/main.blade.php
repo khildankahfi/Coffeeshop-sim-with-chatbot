@@ -172,6 +172,75 @@
         .footer-links a { color: var(--text-muted); font-size: 13px; margin-left: 20px; }
         .footer-links a:hover { color: var(--brown-light); }
         .footer-copy { color: #5a3a22; font-size: 12px; margin-top: 4px; }
+
+        /* ===== TYPING INDICATOR ===== */
+        .typing-bubble {
+            display: flex; gap: 4px; align-items: center;
+            padding: 8px 12px; background: #fff;
+            border-radius: 14px; border-bottom-left-radius: 3px;
+            border: 0.5px solid #e8d8c4;
+            width: fit-content;
+        }
+        .typing-bubble span {
+            width: 7px; height: 7px; background: var(--brown-light);
+            border-radius: 50%; animation: typing 1.2s infinite;
+        }
+        .typing-bubble span:nth-child(2) { animation-delay: .2s; }
+        .typing-bubble span:nth-child(3) { animation-delay: .4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* ===== PESAN ===== */
+        .cp-msg {
+            display: flex; gap: 8px; align-items: flex-start;
+            animation: msgIn .25s ease;
+            max-width: 100%;
+        }
+        @keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+        .cp-msg.user {
+            flex-direction: row-reverse;
+        }
+        .msg-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--cream-mid); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0; margin-top: 2px;
+        }
+        .msg-content {
+            max-width: 78%; padding: 10px 14px;
+            border-radius: 16px; font-size: 13px; line-height: 1.6;
+            word-break: break-word;
+        }
+        .cp-msg.assistant .msg-content {
+            background: #fff; color: var(--text-dark);
+            border-bottom-left-radius: 3px;
+            border: 0.5px solid #e8d8c4;
+        }
+        .cp-msg.user .msg-content {
+            background: var(--brown-main); color: var(--cream);
+            border-bottom-right-radius: 3px;
+        }
+        .cp-msg.user .msg-avatar {
+            background: var(--brown-light); color: var(--brown-main);
+            font-size: 12px; font-weight: 700;
+        }
+
+        /* Timestamp */
+        .msg-time {
+            font-size: 10px; color: var(--text-muted);
+            margin-top: 4px; text-align: right;
+        }
+        .cp-msg.assistant .msg-time { text-align: left; padding-left: 36px; }
+        .cp-msg.user .msg-time { text-align: right; padding-right: 36px; }
+
+        /* Error message */
+        .cp-msg.error .msg-content {
+            background: #fee2e2; color: #991b1b;
+            border: 0.5px solid #fecaca;
+        }
     </style>
     @stack('styles')
 </head>
@@ -215,24 +284,44 @@
 <div id="chat-panel" role="dialog" aria-label="Chat Karen">
     <div class="cp-header">
         <div class="cp-avatar">☕</div>
-        <div>
+        <div style="flex:1">
             <div class="cp-name">Karen</div>
             <div class="cp-status"><span class="cp-dot"></span> Online · Siap melayani</div>
         </div>
         <button class="cp-close" onclick="toggleChat()" aria-label="Tutup">×</button>
     </div>
-    <div class="cp-messages" id="cpMessages">
-        <div class="cp-msg assistant">Halo! Saya Karen 👋 Selamat datang di BrewNest. Mau lihat menu, rekomendasi, atau langsung pesan?</div>
+
+    <!-- Typing indicator -->
+    <div id="cp-typing" style="display:none; padding:8px 14px; background:var(--cream-light);">
+        <div class="typing-bubble">
+            <span></span><span></span><span></span>
+        </div>
     </div>
+
+    <div class="cp-messages" id="cpMessages">
+        <div class="cp-msg assistant">
+            <div class="msg-avatar">☕</div>
+            <div class="msg-content">
+                Halo! Saya <strong>Karen</strong> 👋<br>
+                Selamat datang di BrewNest. Saya bisa bantu kamu:<br><br>
+                ☕ Lihat menu & harga<br>
+                ✨ Rekomendasi menu<br>
+                🛒 Proses pesanan
+            </div>
+        </div>
+    </div>
+
     <div class="cp-quick" id="cpQuick">
         <button class="cp-qr" onclick="sendChat('Lihat semua menu')">📋 Menu</button>
         <button class="cp-qr" onclick="sendChat('Rekomendasikan minuman untuk saya')">✨ Rekomendasi</button>
         <button class="cp-qr" onclick="sendChat('Saya mau pesan')">🛒 Pesan</button>
-        <button class="cp-qr" onclick="sendChat('Berapa total penjualan hari ini?')">📊 Laporan</button>
     </div>
+
     <div class="cp-input-wrap">
-        <input class="cp-input" id="cpInput" type="text" placeholder="Ketik pesan..."
-               autocomplete="off" onkeydown="if(event.key==='Enter') sendChat()"/>
+        <input class="cp-input" id="cpInput" type="text"
+            placeholder="Ketik pesan..."
+            autocomplete="off"
+            onkeydown="if(event.key==='Enter') sendChat()"/>
         <button class="cp-send" id="cpSend" onclick="sendChat()" aria-label="Kirim">➤</button>
     </div>
 </div>
@@ -245,30 +334,53 @@ const cpQuick    = document.getElementById('cpQuick');
 const chatPanel  = document.getElementById('chat-panel');
 const chatBadge  = document.getElementById('chat-badge');
 const fabIcon    = document.getElementById('chat-fab-icon');
+const cpTyping   = document.getElementById('cp-typing');
 let isOpen = false;
+let retryCount = 0;
 
 const qrSets = {
-    default:     [{ label:'📋 Menu', msg:'Lihat semua menu' }, { label:'✨ Rekomendasi', msg:'Rekomendasikan minuman untuk saya' }, { label:'🛒 Pesan', msg:'Saya mau pesan' }],
-    after_menu:  [{ label:'🛒 Mau Pesan', msg:'Saya mau pesan' }, { label:'💰 Budget 25rb', msg:'Ada menu di bawah 25 ribu?' }, { label:'☕ Espresso', msg:'Tampilkan menu espresso' }],
-    confirm:     [{ label:'✅ Ya, benar', msg:'Ya, benar' }, { label:'✏️ Ubah', msg:'Saya ingin mengubah pesanan' }, { label:'❌ Batal', msg:'Batal' }],
-    after_order: [{ label:'📋 Menu Lagi', msg:'Lihat semua menu' }, { label:'➕ Tambah', msg:'Saya mau tambah pesanan' }],
-    name:        [],
+    default:     [
+        { label: '📋 Lihat Menu',      msg: 'Lihat semua menu' },
+        { label: '✨ Rekomendasi',      msg: 'Rekomendasikan minuman untuk saya' },
+        { label: '🛒 Saya mau pesan',  msg: 'Saya mau pesan' },
+    ],
+    after_menu:  [
+        { label: '🛒 Mau Pesan',       msg: 'Saya mau pesan' },
+        { label: '💰 Budget 25rb',     msg: 'Ada menu di bawah 25 ribu?' },
+        { label: '☕ Lihat Espresso',  msg: 'Tampilkan menu espresso' },
+        { label: '🍵 Non Coffee',      msg: 'Tampilkan menu non coffee' },
+    ],
+    confirm:     [
+        { label: '✅ Ya, benar',        msg: 'Ya, benar' },
+        { label: '✏️ Ubah pesanan',     msg: 'Saya ingin mengubah pesanan' },
+        { label: '❌ Batal',            msg: 'Batal, tidak jadi pesan' },
+    ],
+    after_order: [
+        { label: '📋 Lihat Menu Lagi', msg: 'Lihat semua menu' },
+        { label: '➕ Tambah Pesanan',  msg: 'Saya mau tambah pesanan' },
+    ],
+    name: [],
 };
 
 function detectQR(text) {
     const t = text.toLowerCase();
-    if (t.includes('nama') && (t.includes('anda') || t.includes('kamu'))) return 'name';
+    if (t.includes('nama') && (t.includes('anda') || t.includes('kamu') || t.includes('boleh'))) return 'name';
     if (t.includes('konfirmasi') || t.includes('yakin') || t.includes('sudah benar') || t.includes('apakah benar')) return 'confirm';
-    if (t.includes('berhasil') || t.includes('ord-') || t.includes('pesanan') && t.includes('masuk')) return 'after_order';
-    if (t.includes('menu') || t.includes('tersedia') || t.includes('daftar')) return 'after_menu';
+    if (t.includes('berhasil') || t.includes('ord-') || (t.includes('pesanan') && t.includes('masuk'))) return 'after_order';
+    if (t.includes('menu') || t.includes('tersedia') || t.includes('daftar') || t.includes('berikut')) return 'after_menu';
     return 'default';
 }
 
 function setQR(type) {
     const set = qrSets[type] || qrSets.default;
+    if (set.length === 0) { cpQuick.innerHTML = ''; return; }
     cpQuick.innerHTML = set.map(b =>
         `<button class="cp-qr" onclick="sendChat('${b.msg}')">${b.label}</button>`
     ).join('');
+}
+
+function getTime() {
+    return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }
 
 function toggleChat() {
@@ -276,7 +388,7 @@ function toggleChat() {
     chatPanel.classList.toggle('open', isOpen);
     chatBadge.style.display = 'none';
     fabIcon.textContent = isOpen ? '✕' : '💬';
-    if (isOpen) cpInput.focus();
+    if (isOpen) setTimeout(() => cpInput.focus(), 300);
 }
 
 function openChatWith(msg) {
@@ -286,15 +398,66 @@ function openChatWith(msg) {
         chatBadge.style.display = 'none';
         fabIcon.textContent = '✕';
     }
-    setTimeout(() => sendChat(msg), 300);
+    setTimeout(() => sendChat(msg), 400);
+}
+
+function appendMsg(role, text, isError = false) {
+    const wrapper = document.createElement('div');
+    wrapper.className = `cp-msg ${role}${isError ? ' error' : ''}`;
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'msg-avatar';
+    avatarEl.textContent = role === 'user' ? '👤' : '☕';
+
+    const contentEl = document.createElement('div');
+    contentEl.className = 'msg-content';
+    // Format teks — ganti newline jadi <br>
+    contentEl.innerHTML = text.replace(/\n/g, '<br>');
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'msg-time';
+    timeEl.textContent = getTime();
+
+    if (role === 'user') {
+        wrapper.appendChild(contentEl);
+        wrapper.appendChild(avatarEl);
+    } else {
+        wrapper.appendChild(avatarEl);
+        wrapper.appendChild(contentEl);
+    }
+
+    cpMessages.appendChild(wrapper);
+
+    // Tambah timestamp di bawah
+    const timeWrapper = document.createElement('div');
+    timeWrapper.className = `msg-time ${role === 'user' ? 'text-right' : ''}`;
+    timeWrapper.style.cssText = `font-size:10px; color:#a08060; padding: 0 36px 4px; text-align:${role === 'user' ? 'right' : 'left'}`;
+    timeWrapper.textContent = getTime();
+    cpMessages.appendChild(timeWrapper);
+
+    cpMessages.scrollTop = cpMessages.scrollHeight;
+    return wrapper;
+}
+
+function showTyping() {
+    cpTyping.style.display = 'block';
+    cpMessages.scrollTop = cpMessages.scrollHeight;
+}
+
+function hideTyping() {
+    cpTyping.style.display = 'none';
 }
 
 async function sendChat(text = null) {
     const msg = text ?? cpInput.value.trim();
-    if (!msg) return;
+    if (!msg || cpSend.disabled) return;
+
     appendMsg('user', msg);
-    cpInput.value = ''; cpSend.disabled = true; cpQuick.innerHTML = '';
-    const loader = appendMsg('loading', 'Karen sedang mengetik...');
+    cpInput.value = '';
+    cpSend.disabled = true;
+    cpQuick.innerHTML = '';
+    showTyping();
+
     try {
         const res = await fetch('{{ route("chat.send") }}', {
             method: 'POST',
@@ -304,27 +467,35 @@ async function sendChat(text = null) {
             },
             body: JSON.stringify({ message: msg }),
         });
+
+        hideTyping();
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
         const data = await res.json();
-        loader.remove();
         const reply = data.reply || 'Maaf, tidak ada respons.';
+
+        retryCount = 0; // reset retry counter
         appendMsg('assistant', reply);
         setQR(detectQR(reply));
-    } catch {
-        loader.remove();
-        appendMsg('assistant', 'Maaf, terjadi gangguan. Silakan coba lagi.');
-        setQR('default');
-    } finally {
-        cpSend.disabled = false; cpInput.focus();
-    }
-}
 
-function appendMsg(role, text) {
-    const div = document.createElement('div');
-    div.className = `cp-msg ${role}`;
-    div.textContent = text;
-    cpMessages.appendChild(div);
-    cpMessages.scrollTop = cpMessages.scrollHeight;
-    return div;
+    } catch (err) {
+        hideTyping();
+        retryCount++;
+
+        if (retryCount <= 2) {
+            // Auto retry sekali
+            appendMsg('assistant', '⚠️ Koneksi terputus, mencoba ulang...', false);
+            setTimeout(() => sendChat(msg), 1500);
+        } else {
+            retryCount = 0;
+            appendMsg('assistant', '❌ Gagal terhubung ke Karen. Silakan refresh halaman dan coba lagi.', true);
+            setQR('default');
+        }
+    } finally {
+        cpSend.disabled = false;
+        cpInput.focus();
+    }
 }
 </script>
 

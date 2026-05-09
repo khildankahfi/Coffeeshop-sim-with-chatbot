@@ -14,15 +14,33 @@ class AiChatController extends Controller
     {
         $request->validate(['message' => 'required|string|max:500']);
 
-        // Pakai session ID Laravel yang persisten per browser
         $sessionId = $request->session()->getId();
 
         try {
             $reply = $this->agent->chat($sessionId, $request->message);
+
+            if (empty(trim($reply))) {
+                return response()->json(['reply' => 'Maaf, saya tidak mengerti. Bisa ulangi pertanyaanmu?']);
+            }
+
             return response()->json(['reply' => $reply]);
+
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            \Log::error('Groq API error: ' . $e->getMessage());
+
+            // Reset cache session jika error API
+            \Cache::forget("chat_history_{$sessionId}");
+
+            return response()->json([
+                'reply' => 'Maaf, asisten sedang sibuk. Silakan coba lagi dalam beberapa detik.'
+            ]);
+
         } catch (\Exception $e) {
             \Log::error('AgentService error: ' . $e->getMessage());
-            return response()->json(['reply' => 'Maaf, terjadi kesalahan. Silakan coba lagi.'], 500);
+
+            return response()->json([
+                'reply' => 'Terjadi kesalahan. Silakan refresh halaman dan coba lagi.'
+            ]);
         }
     }
 

@@ -104,6 +104,21 @@ class GroqClient
             'Content-Type'  => 'application/json',
         ])->timeout(30)->post('https://api.groq.com/openai/v1/chat/completions', $payload);
 
+        // Jika rate limit, tun
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type'  => 'application/json',
+        ])->timeout(30)->post('https://api.groq.com/openai/v1/chat/completions', $payload);
+
+        // Jika rate limit, tunggu 3 detik dan retry sekali
+        if ($response->status() === 429) {
+            sleep(3);
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type'  => 'application/json',
+            ])->timeout(30)->post('https://api.groq.com/openai/v1/chat/completions', $payload);
+        }
+
         $response->throw();
 
         return $this->normalizeResponse($response->json());
