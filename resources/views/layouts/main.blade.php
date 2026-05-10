@@ -241,6 +241,12 @@
             background: #fee2e2; color: #991b1b;
             border: 0.5px solid #fecaca;
         }
+
+        /* Tambahan */
+        .chat-badge-pending    { background:#fef3c7; color:#92400e; padding:1px 8px; border-radius:8px; font-size:11px; font-weight:600; }
+        .chat-badge-processing { background:#dbeafe; color:#1e40af; padding:1px 8px; border-radius:8px; font-size:11px; font-weight:600; }
+        .chat-badge-done       { background:#d1fae5; color:#065f46; padding:1px 8px; border-radius:8px; font-size:11px; font-weight:600; }
+        .chat-badge-cancelled  { background:#fee2e2; color:#991b1b; padding:1px 8px; border-radius:8px; font-size:11px; font-weight:600; }
     </style>
     @stack('styles')
 </head>
@@ -339,41 +345,52 @@ let isOpen = false;
 let retryCount = 0;
 
 const qrSets = {
-    default:     [
-        { label: '📋 Lihat Menu',      msg: 'Lihat semua menu' },
-        { label: '✨ Rekomendasi',      msg: 'Rekomendasikan minuman untuk saya' },
-        { label: '🛒 Saya mau pesan',  msg: 'Saya mau pesan' },
+    default: [
+        { label: '📋 Lihat Menu',       msg: 'Lihat semua menu' },
+        { label: '✨ Rekomendasi',       msg: 'Rekomendasikan minuman untuk saya' },
+        { label: '🛒 Saya mau pesan',   msg: 'Saya mau pesan' },
+        { label: '📦 Cek Pesanan',      msg: 'Saya ingin cek riwayat pesanan saya' },
     ],
-    after_menu:  [
-        { label: '🛒 Mau Pesan',       msg: 'Saya mau pesan' },
-        { label: '💰 Budget 25rb',     msg: 'Ada menu di bawah 25 ribu?' },
-        { label: '☕ Lihat Espresso',  msg: 'Tampilkan menu espresso' },
-        { label: '🍵 Non Coffee',      msg: 'Tampilkan menu non coffee' },
+    after_menu: [
+        { label: '🛒 Mau Pesan',        msg: 'Saya mau pesan' },
+        { label: '💰 Budget 25rb',      msg: 'Ada menu di bawah 25 ribu?' },
+        { label: '☕ Espresso',         msg: 'Tampilkan menu espresso' },
+        { label: '🍵 Non Coffee',       msg: 'Tampilkan menu non coffee' },
     ],
-    confirm:     [
-        { label: '✅ Ya, benar',        msg: 'Ya, benar' },
-        { label: '✏️ Ubah pesanan',     msg: 'Saya ingin mengubah pesanan' },
-        { label: '❌ Batal',            msg: 'Batal, tidak jadi pesan' },
+    confirm: [
+        { label: '✅ Ya, benar',         msg: 'Ya, benar' },
+        { label: '✏️ Ubah',             msg: 'Saya ingin mengubah pesanan' },
+        { label: '❌ Batal',             msg: 'Batal, tidak jadi pesan' },
     ],
     after_order: [
-        { label: '📋 Lihat Menu Lagi', msg: 'Lihat semua menu' },
-        { label: '➕ Tambah Pesanan',  msg: 'Saya mau tambah pesanan' },
+        { label: '⭐ Beri Rating',      msg: 'Saya ingin memberi rating pesanan saya' },
+        { label: '📦 Cek Status',       msg: 'Saya ingin cek riwayat pesanan saya' },
+        { label: '📋 Lihat Menu',       msg: 'Lihat semua menu' },
+        { label: '➕ Tambah Pesanan',   msg: 'Saya mau tambah pesanan' },
+    ],
+    rating: [
+        { label: '⭐⭐⭐⭐⭐ 5 Bintang', msg: 'Saya beri rating 5 bintang, sangat puas!' },
+        { label: '⭐⭐⭐⭐ 4 Bintang',  msg: 'Saya beri rating 4 bintang, puas' },
+        { label: '⭐⭐⭐ 3 Bintang',   msg: 'Saya beri rating 3 bintang, cukup' },
     ],
     name: [],
 };
 
 function detectQR(text) {
     const t = text.toLowerCase();
-    if (t.includes('nama') && (t.includes('anda') || t.includes('kamu') || t.includes('boleh'))) return 'name';
-    if (t.includes('konfirmasi') || t.includes('yakin') || t.includes('sudah benar') || t.includes('apakah benar')) return 'confirm';
-    if (t.includes('berhasil') || t.includes('ord-') || (t.includes('pesanan') && t.includes('masuk'))) return 'after_order';
-    if (t.includes('menu') || t.includes('tersedia') || t.includes('daftar') || t.includes('berikut')) return 'after_menu';
+    if (t.includes('nama') && (t.includes('anda') || t.includes('kamu') || t.includes('boleh') || t.includes('siapa'))) return 'name';
+    if (t.includes('konfirmasi') || t.includes('sudah benar') || t.includes('apakah benar')) return 'confirm';
+    if (t.includes('berhasil') || t.includes('ord-') || t.includes('pesanan berhasil')) return 'after_order';
+    if (t.includes('rating') || t.includes('bintang') || t.includes('ulasan') || t.includes('ketik bintang')) return 'rating';
+    if (t.includes('riwayat') || t.includes('status pesanan')) return 'after_order';
+    if (t.includes('jam') || t.includes('buka') || t.includes('tutup')) return 'jam';
+    if (t.includes('menu') || t.includes('tersedia') || t.includes('daftar')) return 'after_menu';
     return 'default';
 }
 
 function setQR(type) {
     const set = qrSets[type] || qrSets.default;
-    if (set.length === 0) { cpQuick.innerHTML = ''; return; }
+    if (!set.length) { cpQuick.innerHTML = ''; return; }
     cpQuick.innerHTML = set.map(b =>
         `<button class="cp-qr" onclick="sendChat('${b.msg}')">${b.label}</button>`
     ).join('');
@@ -381,6 +398,28 @@ function setQR(type) {
 
 function getTime() {
     return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Format teks Karen jadi HTML yang rapi
+function formatText(text) {
+    return text
+        // Escape HTML dulu
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        // Bold **teks**
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Kode order bold
+        .replace(/(ORD-[\w-]+)/g, '<strong style="color:#3d1f0a">$1</strong>')
+        // Total bold + warna
+        .replace(/(💰 Total: Rp[\d.,]+)/g, '<strong>$1</strong>')
+        // Status badges
+        .replace(/⏳ Menunggu/g, '<span class="chat-badge-pending">⏳ Menunggu</span>')
+        .replace(/🔄 Diproses/g, '<span class="chat-badge-processing">🔄 Diproses</span>')
+        .replace(/✅ Selesai/g, '<span class="chat-badge-done">✅ Selesai</span>')
+        .replace(/❌ Dibatalkan/g, '<span class="chat-badge-cancelled">❌ Dibatalkan</span>')
+        // Newline jadi <br>
+        .replace(/\n/g, '<br>');
 }
 
 function toggleChat() {
@@ -411,12 +450,7 @@ function appendMsg(role, text, isError = false) {
 
     const contentEl = document.createElement('div');
     contentEl.className = 'msg-content';
-    // Format teks — ganti newline jadi <br>
-    contentEl.innerHTML = text.replace(/\n/g, '<br>');
-
-    const timeEl = document.createElement('div');
-    timeEl.className = 'msg-time';
-    timeEl.textContent = getTime();
+    contentEl.innerHTML = role === 'assistant' ? formatText(text) : text;
 
     if (role === 'user') {
         wrapper.appendChild(contentEl);
@@ -428,12 +462,11 @@ function appendMsg(role, text, isError = false) {
 
     cpMessages.appendChild(wrapper);
 
-    // Tambah timestamp di bawah
-    const timeWrapper = document.createElement('div');
-    timeWrapper.className = `msg-time ${role === 'user' ? 'text-right' : ''}`;
-    timeWrapper.style.cssText = `font-size:10px; color:#a08060; padding: 0 36px 4px; text-align:${role === 'user' ? 'right' : 'left'}`;
-    timeWrapper.textContent = getTime();
-    cpMessages.appendChild(timeWrapper);
+    // Timestamp
+    const timeEl = document.createElement('div');
+    timeEl.style.cssText = `font-size:10px;color:#a08060;padding:2px ${role === 'user' ? '42px 6px 0' : '0 6px 0 42px'};text-align:${role === 'user' ? 'right' : 'left'}`;
+    timeEl.textContent = getTime();
+    cpMessages.appendChild(timeEl);
 
     cpMessages.scrollTop = cpMessages.scrollHeight;
     return wrapper;
@@ -469,13 +502,12 @@ async function sendChat(text = null) {
         });
 
         hideTyping();
-
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const data = await res.json();
         const reply = data.reply || 'Maaf, tidak ada respons.';
 
-        retryCount = 0; // reset retry counter
+        retryCount = 0;
         appendMsg('assistant', reply);
         setQR(detectQR(reply));
 
@@ -483,13 +515,16 @@ async function sendChat(text = null) {
         hideTyping();
         retryCount++;
 
-        if (retryCount <= 2) {
-            // Auto retry sekali
-            appendMsg('assistant', '⚠️ Koneksi terputus, mencoba ulang...', false);
-            setTimeout(() => sendChat(msg), 1500);
+        if (retryCount <= 1) {
+            appendMsg('assistant', '⚠️ Mencoba menghubungi Karen...');
+            setTimeout(() => {
+                cpMessages.lastElementChild?.remove();
+                cpMessages.lastElementChild?.remove();
+                sendChat(msg);
+            }, 2000);
         } else {
             retryCount = 0;
-            appendMsg('assistant', '❌ Gagal terhubung ke Karen. Silakan refresh halaman dan coba lagi.', true);
+            appendMsg('assistant', '❌ Gagal terhubung. Silakan coba lagi.', true);
             setQR('default');
         }
     } finally {

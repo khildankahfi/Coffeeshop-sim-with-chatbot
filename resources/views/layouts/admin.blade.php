@@ -139,9 +139,17 @@
 
     <nav class="sidebar-menu">
         <div class="menu-label">Menu Utama</div>
+        <a href="{{ route('admin.kasir.index') }}"
+        class="sidebar-link {{ request()->routeIs('admin.kasir.*') ? 'active' : '' }}">
+            <span class="icon">🖥️</span> Sistem Kasir
+        </a>
         <a href="{{ route('admin.orders.index') }}"
-           class="sidebar-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+        class="sidebar-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
             <span class="icon">📋</span> Daftar Order
+        </a>
+        <a href="{{ route('admin.laporan.index') }}"
+        class="sidebar-link {{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}">
+            <span class="icon">📊</span> Laporan
         </a>
         <a href="{{ route('admin.menu.adminIndex') }}"
         class="sidebar-link {{ request()->routeIs('admin.menu.*') ? 'active' : '' }}">
