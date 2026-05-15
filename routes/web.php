@@ -40,4 +40,10 @@ Route::get('/dashboard', fn() => redirect()->route('admin.orders.index'))
     ->middleware('auth')
     ->name('dashboard');
 
+Route::get('/personal/recommendation', function () {
+    return response()->json([
+        'message' => 'Recommendation API'
+    ]);
+})->name('api.personal.recommendation');
+
 require __DIR__.'/auth.php';
