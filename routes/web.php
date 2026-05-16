@@ -19,6 +19,15 @@ Route::post('/chat/send', [AiChatController::class, 'send'])->name('chat.send');
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', fn() => redirect()->route('admin.orders.index'));
 
+     // Check new orders untuk auto-refresh
+    Route::get('/orders/check-new', function () {
+        return response()->json([
+            'total'   => \App\Models\Order::count(),
+            'pending' => \App\Models\Order::where('status', 'pending')->count(),
+        ]);
+    })->name('orders.check-new');
+
+
     // Orders
     Route::get('/orders',         [OrderController::class, 'index'])->name('orders.index');
     Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');

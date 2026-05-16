@@ -1,475 +1,354 @@
 @extends('layouts.admin')
-@section('title', 'Sistem Kasir')
+@section('title', '🖥️ Sistem Kasir')
 @push('styles')
 <style>
 .kasir-wrap {
     display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 24px;
-    align-items: start;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    height: calc(100vh - 106px);
 }
 
-/* ===== PANEL KIRI — MENU ===== */
-.menu-panel { display: flex; flex-direction: column; gap: 16px; }
-
-.search-bar {
-    display: flex; gap: 10px; align-items: center;
-}
-.search-input {
-    flex: 1; border: 1px solid #e8d8c4; border-radius: 10px;
+/* LEFT */
+.menu-panel { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.search-row { display: flex; gap: 10px; }
+.search-inp {
+    flex: 1; border: 1px solid rgba(200,151,58,.15); border-radius: 12px;
     padding: 10px 14px; font-size: 13px; outline: none;
-    font-family: 'DM Sans', sans-serif; background: var(--cream-light);
+    font-family: 'Outfit', sans-serif; background: #fff; color: #1A0800;
+    transition: border .2s;
 }
-.search-input:focus { border-color: var(--brown-main); }
+.search-inp:focus { border-color: var(--gold); }
+.cat-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.cat-btn {
+    padding: 6px 14px; border-radius: 16px; font-size: 12px; cursor: pointer;
+    border: 1px solid rgba(200,151,58,.15); color: var(--muted);
+    background: transparent; font-family: 'Outfit', sans-serif; transition: all .15s;
+}
+.cat-btn.active, .cat-btn:hover { background: var(--espresso); color: var(--cream); border-color: var(--espresso); }
 
-.cat-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-.cat-tab {
-    padding: 6px 16px; border-radius: 20px; font-size: 12px;
-    cursor: pointer; border: 1px solid #d4b896; color: var(--brown-mid);
-    background: transparent; font-family: 'DM Sans', sans-serif;
-    transition: all .2s;
-}
-.cat-tab.active, .cat-tab:hover {
-    background: var(--brown-main); color: var(--cream);
-    border-color: var(--brown-main);
-}
+.menu-scroll { flex: 1; overflow-y: auto; padding-right: 4px; }
+.menu-scroll::-webkit-scrollbar { width: 3px; }
+.menu-scroll::-webkit-scrollbar-thumb { background: rgba(200,151,58,.2); border-radius: 2px; }
 
-.menu-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+.prod-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.prod-card {
+    background: #fff; border: 1.5px solid rgba(200,151,58,.1);
+    border-radius: 14px; padding: 14px; cursor: pointer;
+    transition: all .25s cubic-bezier(.34,1.56,.64,1);
+    text-align: center; position: relative;
 }
-.menu-item {
-    background: #fff; border: 1.5px solid #e8d8c4;
-    border-radius: 12px; padding: 14px; cursor: pointer;
-    transition: all .2s; text-align: center; position: relative;
-}
-.menu-item:hover { border-color: var(--brown-main); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(61,31,10,.1); }
-.menu-item.selected { border-color: var(--brown-main); background: #faf0e0; }
-.menu-item.unavailable { opacity: 0.5; cursor: not-allowed; }
-.menu-emoji { font-size: 28px; margin-bottom: 8px; }
-.menu-name { font-size: 13px; font-weight: 600; color: var(--brown-main); margin-bottom: 3px; }
-.menu-cat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
-.menu-price { font-size: 13px; font-weight: 600; color: var(--accent); }
-.item-qty-ctrl {
-    display: none; align-items: center; justify-content: center;
-    gap: 8px; margin-top: 10px;
-}
-.menu-item.selected .item-qty-ctrl { display: flex; }
-.qty-btn {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 1.5px solid var(--brown-main); background: transparent;
-    color: var(--brown-main); font-size: 16px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Sans', sans-serif; transition: all .15s;
-}
-.qty-btn:hover { background: var(--brown-main); color: var(--cream); }
-.qty-num { font-size: 14px; font-weight: 600; color: var(--brown-main); min-width: 20px; text-align: center; }
-.selected-badge {
+.prod-card:hover { border-color: rgba(200,151,58,.35); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(44,18,8,.08); }
+.prod-card.selected { border-color: var(--gold); background: #FFFBF2; }
+.prod-card.unavail { opacity: .45; cursor: not-allowed; pointer-events: none; }
+.p-badge {
     position: absolute; top: -6px; right: -6px;
     width: 20px; height: 20px; border-radius: 50%;
-    background: var(--brown-main); color: var(--cream);
+    background: var(--espresso); color: var(--cream);
     font-size: 10px; font-weight: 700;
     display: none; align-items: center; justify-content: center;
 }
-.menu-item.selected .selected-badge { display: flex; }
+.prod-card.selected .p-badge { display: flex; }
+.p-emoji { font-size: 26px; margin-bottom: 8px; display: block; }
+.p-name { font-size: 12px; font-weight: 600; color: #1A0800; margin-bottom: 2px; }
+.p-cat { font-size: 9px; color: var(--muted); margin-bottom: 6px; letter-spacing: .5px; text-transform: uppercase; }
+.p-price { font-size: 13px; font-weight: 600; color: var(--accent); }
+.qty-ctrl { display: none; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+.prod-card.selected .qty-ctrl { display: flex; }
+.qty-btn {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 1.5px solid var(--gold); background: transparent; color: var(--gold);
+    font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; font-family: 'Outfit', sans-serif; line-height: 1;
+}
+.qty-btn:hover { background: var(--gold); color: var(--espresso); }
+.qty-num { font-size: 13px; font-weight: 600; color: #1A0800; min-width: 18px; text-align: center; }
 
-/* ===== PANEL KANAN — ORDER ===== */
+/* RIGHT: ORDER PANEL */
 .order-panel {
-    background: #fff; border: 0.5px solid #e8d8c4;
-    border-radius: 14px; position: sticky; top: 80px;
-    overflow: hidden;
+    background: #fff;
+    border-radius: 16px;
+    display: flex; flex-direction: column; overflow: hidden;
+    border: 0.5px solid rgba(200,151,58,.15);
+    box-shadow: 0 4px 20px rgba(44,18,8,.06);
 }
-.order-header {
-    background: var(--brown-main); padding: 16px 20px;
-    display: flex; align-items: center; justify-content: space-between;
+.op-head {
+    padding: 16px 18px;
+    background: var(--espresso);
+    border-bottom: none;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    border-radius: 16px 16px 0 0;
 }
-.order-header h3 { color: var(--cream); font-size: 15px; font-family: 'Playfair Display', serif; }
-.order-count {
-    background: var(--brown-light); color: var(--brown-main);
-    font-size: 12px; font-weight: 700; padding: 2px 10px;
-    border-radius: 12px;
+.op-title { color: var(--cream); font-size: 14px; font-weight: 600; letter-spacing: .3px; }
+.op-count { background: rgba(200,151,58,.2); color: var(--gold-lt); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+
+.op-body { flex: 1; overflow-y: auto; padding: 16px; background: #fff; }
+.op-body::-webkit-scrollbar { width: 3px; }
+.op-body::-webkit-scrollbar-thumb { background: rgba(200,151,58,.1); border-radius: 2px; }
+
+.op-sec { margin-bottom: 14px; }
+.op-lbl { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+.op-inp {
+    width: 100%; background: var(--warm); border: 1px solid rgba(200,151,58,.15);
+    border-radius: 10px; padding: 9px 12px; font-size: 13px; outline: none;
+    color: #1A0800; font-family: 'Outfit', sans-serif; transition: border .2s;
 }
-.order-body { padding: 16px 20px; }
+.op-inp::placeholder { color: rgba(138,112,96,.45); }
+.op-inp:focus { border-color: var(--gold); background: #fff; }
+textarea.op-inp { resize: none; height: 54px; font-size: 12px; }
 
-.customer-input-wrap { margin-bottom: 16px; }
-.input-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: .5px; }
-.customer-input {
-    width: 100%; border: 1px solid #e8d8c4; border-radius: 10px;
-    padding: 9px 12px; font-size: 13px; outline: none;
-    font-family: 'DM Sans', sans-serif; background: var(--cream-light);
-}
-.customer-input:focus { border-color: var(--brown-main); }
+.op-items { min-height: 80px; }
+.empty-cart { text-align: center; padding: 24px 16px; color: rgba(250,240,220,.2); }
+.empty-cart-icon { font-size: 32px; margin-bottom: 8px; opacity: .3; display: block; }
 
-.order-items-list { min-height: 120px; margin-bottom: 16px; }
-.empty-cart {
-    text-align: center; padding: 30px 20px;
-    color: var(--text-muted); font-size: 13px;
-}
-.empty-cart .empty-icon { font-size: 36px; margin-bottom: 8px; }
+.oi-row { 
+    display: flex; align-items: center; gap: 8px; 
+    padding: 9px 0; border-bottom: 1px solid rgba(200,151,58,.08); 
+    animation: slideIn .2s ease; }
 
-.order-item-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 0; border-bottom: 0.5px solid #f0e8d8;
-    animation: slideIn .2s ease;
-}
-@keyframes slideIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:none; } }
-.order-item-row:last-child { border-bottom: none; }
-.oi-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--brown-main); }
-.oi-qty { font-size: 12px; color: var(--text-muted); }
-.oi-price { font-size: 13px; font-weight: 600; color: var(--accent); }
-.oi-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; padding: 0 4px; transition: color .15s; }
-.oi-remove:hover { color: #e53e3e; }
+@keyframes slideIn { from { opacity:0; transform:translateX(8px); } to { opacity:1; transform:none; } }
+.oi-row:last-child { border-bottom: none; }
+.oi-name { flex: 1; font-size: 12px; font-weight: 500; color: #1A0800; }
+.oi-qty { font-size: 11px; color: var(--muted); }
+.oi-price { font-size: 12px; font-weight: 600; color: var(--accent); }
+.oi-del { background: none; border: none; color: rgba(138,112,96,.3); cursor: pointer; font-size: 16px; padding: 0 3px; transition: color .15s; line-height: 1; }
+.oi-del:hover { color: #dc2626; }
 
-.order-divider { border: none; border-top: 1px dashed #e8d8c4; margin: 12px 0; }
+.op-divider { border: none; border-top: 1px dashed rgba(200,151,58,.12); margin: 10px 0; }
+.sum-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+.sum-row .lbl { color: var(--muted); }
+.sum-row .val { color: #1A0800; font-weight: 500; }
+.sum-row.total .lbl { font-size: 13px; font-weight: 600; color: #1A0800; }
+.sum-row.total .val { font-size: 16px; font-weight: 700; color: var(--accent); }
 
-.order-summary { margin-bottom: 16px; }
-.summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; }
-.summary-row .label { color: var(--text-muted); }
-.summary-row .value { font-weight: 500; color: var(--text-dark); }
-.summary-row.total .label { font-size: 14px; font-weight: 600; color: var(--brown-main); }
-.summary-row.total .value { font-size: 16px; font-weight: 700; color: var(--accent); }
+/* Empty cart */
+.empty-cart { text-align: center; padding: 24px 16px; color: rgba(138,112,96,.45); }
+.empty-cart-icon { font-size: 32px; margin-bottom: 8px; opacity: .35; display: block; }
 
-.notes-wrap { margin-bottom: 16px; }
-.notes-input {
-    width: 100%; border: 1px solid #e8d8c4; border-radius: 10px;
-    padding: 8px 12px; font-size: 12px; outline: none;
-    font-family: 'DM Sans', sans-serif; background: var(--cream-light);
-    resize: none; height: 60px;
-}
-.notes-input:focus { border-color: var(--brown-main); }
-
+.op-footer { padding: 0 16px 16px; flex-shrink: 0; }
 .btn-order {
-    width: 100%; background: var(--brown-main); color: var(--cream);
-    border: none; padding: 13px; border-radius: 12px;
-    font-size: 14px; font-weight: 600; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; transition: background .2s;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; background: linear-gradient(135deg, var(--gold), var(--accent));
+    color: var(--espresso); border: none; padding: 13px; border-radius: 12px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: 'Outfit', sans-serif; transition: all .2s; letter-spacing: .3px;
 }
-.btn-order:hover { background: var(--accent); }
-.btn-order:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-clear {
-    width: 100%; background: transparent; color: var(--text-muted);
-    border: 1px solid #e8d8c4; padding: 9px; border-radius: 12px;
-    font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+.btn-order:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(200,151,58,.3); }
+.btn-order:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-clr {
+    width: 100%; background: transparent; color: rgba(250,240,220,.25);
+    border: 1px solid rgba(200,151,58,.06); padding: 9px; border-radius: 12px;
+    font-size: 12px; cursor: pointer; font-family: 'Outfit', sans-serif;
     margin-top: 8px; transition: all .2s;
 }
-.btn-clear:hover { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.btn-clr:hover { background: rgba(248,113,113,.08); color: #f87171; border-color: rgba(248,113,113,.12); }
 
-/* ===== SUCCESS TOAST ===== */
+/* TOAST */
 .toast {
-    position: fixed; top: 80px; right: 28px; z-index: 9999;
-    background: var(--brown-main); color: var(--cream);
-    padding: 14px 20px; border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(61,31,10,.25);
-    font-size: 13px; min-width: 280px;
+    position: fixed; top: 70px; right: 24px; z-index: 9999;
+    background: var(--espresso); border: 1px solid rgba(200,151,58,.2);
+    color: var(--cream); padding: 14px 18px; border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.3); font-size: 13px; min-width: 260px;
     transform: translateY(-20px); opacity: 0;
-    transition: all .3s cubic-bezier(.34,1.56,.64,1);
-    pointer-events: none;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1); pointer-events: none;
 }
 .toast.show { transform: translateY(0); opacity: 1; }
-.toast-title { font-weight: 600; margin-bottom: 4px; font-size: 14px; }
-.toast-code { color: var(--brown-light); font-size: 12px; }
+.toast-title { font-weight: 600; color: var(--gold); margin-bottom: 3px; font-size: 14px; }
+.toast-sub { color: rgba(250,240,220,.45); font-size: 12px; }
 </style>
 @endpush
 
 @section('content')
 <div class="kasir-wrap">
-    <!-- PANEL KIRI: MENU -->
+    <!-- LEFT: MENU GRID -->
     <div class="menu-panel">
-        <!-- Search -->
-        <div class="search-bar">
-            <input type="text" class="search-input" id="searchInput"
+        <div class="search-row">
+            <input type="text" class="search-inp" id="searchInput"
                    placeholder="🔍 Cari menu..." oninput="filterMenu()"/>
         </div>
-
-        <!-- Kategori tabs -->
-        <div class="cat-tabs" id="catTabs">
-            <button class="cat-tab active" data-cat="all" onclick="filterCat('all', this)">Semua</button>
+        <div class="cat-row" id="catRow">
+            <button class="cat-btn active" data-cat="all" onclick="filterCat('all',this)">Semua</button>
             @foreach($categories as $cat)
-            <button class="cat-tab" data-cat="{{ $cat->slug }}" onclick="filterCat('{{ $cat->slug }}', this)">
+            <button class="cat-btn" data-cat="{{ $cat->slug }}" onclick="filterCat('{{ $cat->slug }}',this)">
                 {{ $cat->name }}
             </button>
             @endforeach
         </div>
-
-        <!-- Grid menu -->
-        <div class="menu-grid" id="menuGrid">
+        <div class="menu-scroll">
             @php
-            $emojis = [
-                'Americano'=>'☕','Cappuccino'=>'☕','Latte'=>'🥛',
-                'V60 Ethiopia'=>'🍵','Aeropress'=>'🫗',
-                'Matcha Latte'=>'🍃','Coklat Panas'=>'🍫',
-                'Croissant'=>'🥐','Banana Bread'=>'🍌',
-            ];
+            $emojis = ['Americano'=>'☕','Cappuccino'=>'☕','Latte'=>'🥛','V60 Ethiopia'=>'🍵','Aeropress'=>'🫗','Matcha Latte'=>'🍃','Coklat Panas'=>'🍫','Croissant'=>'🥐','Banana Bread'=>'🍌'];
             @endphp
-            @foreach($products as $product)
-            <div class="menu-item {{ !$product->is_available ? 'unavailable' : '' }}"
-                 id="item-{{ $product->id }}"
-                 data-id="{{ $product->id }}"
-                 data-name="{{ $product->name }}"
-                 data-price="{{ $product->price }}"
-                 data-cat="{{ $product->category->slug }}"
-                 onclick="{{ $product->is_available ? 'toggleItem(this)' : '' }}">
-                <div class="selected-badge" id="badge-{{ $product->id }}">1</div>
-                <div class="menu-emoji">{{ $emojis[$product->name] ?? '☕' }}</div>
-                <div class="menu-name">{{ $product->name }}</div>
-                <div class="menu-cat-label">{{ $product->category->name }}</div>
-                <div class="menu-price">Rp {{ number_format($product->price, 0, ',', '.') }}</div>
-                <div class="item-qty-ctrl" onclick="event.stopPropagation()">
-                    <button class="qty-btn" onclick="changeQty({{ $product->id }}, -1)">−</button>
-                    <span class="qty-num" id="qty-{{ $product->id }}">1</span>
-                    <button class="qty-btn" onclick="changeQty({{ $product->id }}, 1)">+</button>
+            <div class="prod-grid" id="prodGrid">
+                @foreach($products as $product)
+                <div class="prod-card {{ !$product->is_available ? 'unavail' : '' }}"
+                     id="item-{{ $product->id }}"
+                     data-id="{{ $product->id }}"
+                     data-name="{{ $product->name }}"
+                     data-price="{{ $product->price }}"
+                     data-cat="{{ $product->category->slug }}"
+                     onclick="{{ $product->is_available ? 'toggleItem(this)' : '' }}">
+                    <div class="p-badge" id="badge-{{ $product->id }}">1</div>
+                    <span class="p-emoji">{{ $emojis[$product->name] ?? '☕' }}</span>
+                    <div class="p-name">{{ $product->name }}</div>
+                    <div class="p-cat">{{ $product->category->name }}</div>
+                    <div class="p-price">Rp {{ number_format($product->price, 0, ',', '.') }}</div>
+                    <div class="qty-ctrl" onclick="event.stopPropagation()">
+                        <button class="qty-btn" onclick="changeQty({{ $product->id }}, -1)">−</button>
+                        <span class="qty-num" id="qty-{{ $product->id }}">1</span>
+                        <button class="qty-btn" onclick="changeQty({{ $product->id }}, 1)">+</button>
+                    </div>
                 </div>
+                @endforeach
             </div>
-            @endforeach
         </div>
     </div>
 
-    <!-- PANEL KANAN: ORDER -->
+    <!-- RIGHT: ORDER PANEL -->
     <div class="order-panel">
-        <div class="order-header">
-            <h3>🛒 Pesanan</h3>
-            <span class="order-count" id="orderCount">0 item</span>
+        <div class="op-head">
+            <span class="op-title">🛒 Pesanan</span>
+            <span class="op-count" id="opCount">0 item</span>
         </div>
-        <div class="order-body">
-            <!-- Nama pelanggan -->
-            <div class="customer-input-wrap">
-                <label class="input-label">Nama Pelanggan</label>
-                <input type="text" class="customer-input" id="customerName"
-                       placeholder="Masukkan nama pelanggan..."/>
+        <div class="op-body">
+            <div class="op-sec">
+                <label class="op-lbl">Nama Pelanggan</label>
+                <input type="text" class="op-inp" id="custName" placeholder="Masukkan nama..."/>
             </div>
-
-            <!-- List item order -->
-            <label class="input-label">Item Pesanan</label>
-            <div class="order-items-list" id="orderList">
-                <div class="empty-cart">
-                    <div class="empty-icon">🛒</div>
-                    Pilih menu dari kiri
+            <div class="op-sec">
+                <label class="op-lbl">Item Pesanan</label>
+                <div class="op-items" id="opItems">
+                    <div class="empty-cart">
+                        <span class="empty-cart-icon">🛒</span>
+                        Pilih menu dari kiri
+                    </div>
                 </div>
             </div>
-
-            <hr class="order-divider">
-
-            <!-- Summary -->
-            <div class="order-summary" id="orderSummary" style="display:none">
-                <div class="summary-row">
-                    <span class="label">Subtotal</span>
-                    <span class="value" id="subtotalVal">Rp 0</span>
-                </div>
-                <div class="summary-row total">
-                    <span class="label">Total</span>
-                    <span class="value" id="totalVal">Rp 0</span>
-                </div>
+            <hr class="op-divider">
+            <div id="opSummary" style="display:none; margin-bottom:14px;">
+                <div class="sum-row"><span class="lbl">Subtotal</span><span class="val" id="subtotalVal">Rp 0</span></div>
+                <div class="sum-row total"><span class="lbl">Total</span><span class="val" id="totalVal">Rp 0</span></div>
             </div>
-
-            <!-- Catatan -->
-            <div class="notes-wrap">
-                <label class="input-label">Catatan (opsional)</label>
-                <textarea class="notes-input" id="orderNotes"
-                          placeholder="Contoh: tanpa gula, es sedikit..."></textarea>
+            <div class="op-sec">
+                <label class="op-lbl">Catatan</label>
+                <textarea class="op-inp" id="orderNotes" placeholder="Contoh: tanpa gula, es sedikit..."></textarea>
             </div>
-
-            <!-- Tombol -->
+        </div>
+        <div class="op-footer">
             <button class="btn-order" id="btnOrder" onclick="submitOrder()" disabled>
                 ☕ Buat Pesanan
             </button>
-            <button class="btn-clear" onclick="clearOrder()">🗑️ Kosongkan</button>
+            <button class="btn-clr" onclick="clearOrder()">🗑️ Kosongkan</button>
         </div>
     </div>
 </div>
 
-<!-- Toast notifikasi -->
+<!-- TOAST -->
 <div class="toast" id="toast">
     <div class="toast-title">✅ Pesanan berhasil dibuat!</div>
-    <div class="toast-code" id="toastCode"></div>
+    <div class="toast-sub" id="toastSub"></div>
 </div>
 @endsection
 
 @push('scripts')
 <script>
-// State
-let cart    = {}; // { product_id: { name, price, qty } }
-let allCat  = 'all';
+let cart = {}, activeCat = 'all';
+const fmt = n => new Intl.NumberFormat('id-ID').format(n);
 
-// Toggle item masuk/keluar cart
 function toggleItem(el) {
-    const id    = parseInt(el.dataset.id);
-    const name  = el.dataset.name;
-    const price = parseFloat(el.dataset.price);
-
+    const id = parseInt(el.dataset.id), name = el.dataset.name, price = parseFloat(el.dataset.price);
     if (cart[id]) {
-        // Sudah ada → remove
-        delete cart[id];
-        el.classList.remove('selected');
+        delete cart[id]; el.classList.remove('selected');
         document.getElementById(`qty-${id}`).textContent = '1';
         document.getElementById(`badge-${id}`).textContent = '1';
     } else {
-        // Belum ada → add dengan qty 1
-        cart[id] = { name, price, qty: 1 };
-        el.classList.add('selected');
+        cart[id] = { name, price, qty: 1 }; el.classList.add('selected');
     }
     renderCart();
 }
 
-// Ubah qty dari kontrol di kartu menu
-function changeQty(id, delta) {
+function changeQty(id, d) {
     if (!cart[id]) return;
-    cart[id].qty = Math.max(1, cart[id].qty + delta);
+    cart[id].qty = Math.max(1, cart[id].qty + d);
     document.getElementById(`qty-${id}`).textContent = cart[id].qty;
     document.getElementById(`badge-${id}`).textContent = cart[id].qty;
     renderCart();
 }
 
-// Render cart di panel kanan
-function renderCart() {
-    const list    = document.getElementById('orderList');
-    const summary = document.getElementById('orderSummary');
-    const count   = document.getElementById('orderCount');
-    const btnOrder = document.getElementById('btnOrder');
-    const keys    = Object.keys(cart);
-
-    if (keys.length === 0) {
-        list.innerHTML = '<div class="empty-cart"><div class="empty-icon">🛒</div>Pilih menu dari kiri</div>';
-        summary.style.display = 'none';
-        count.textContent = '0 item';
-        btnOrder.disabled = true;
-        return;
-    }
-
-    let total    = 0;
-    let html     = '';
-    let totalQty = 0;
-
-    keys.forEach(id => {
-        const item    = cart[id];
-        const subtotal = item.price * item.qty;
-        total         += subtotal;
-        totalQty      += item.qty;
-
-        html += `
-        <div class="order-item-row">
-            <div class="oi-name">${item.name}</div>
-            <div class="oi-qty">${item.qty}x</div>
-            <div class="oi-price">Rp ${formatNum(subtotal)}</div>
-            <button class="oi-remove" onclick="removeItem(${id})" title="Hapus">×</button>
-        </div>`;
-    });
-
-    list.innerHTML = html;
-    summary.style.display = 'block';
-    count.textContent = `${totalQty} item`;
-    document.getElementById('subtotalVal').textContent = `Rp ${formatNum(total)}`;
-    document.getElementById('totalVal').textContent    = `Rp ${formatNum(total)}`;
-    btnOrder.disabled = false;
-}
-
-// Hapus item dari cart
 function removeItem(id) {
     const el = document.getElementById(`item-${id}`);
-    if (el) {
-        el.classList.remove('selected');
-        document.getElementById(`qty-${id}`).textContent = '1';
-        document.getElementById(`badge-${id}`).textContent = '1';
-    }
-    delete cart[id];
-    renderCart();
+    if (el) { el.classList.remove('selected'); document.getElementById(`qty-${id}`).textContent = '1'; document.getElementById(`badge-${id}`).textContent = '1'; }
+    delete cart[id]; renderCart();
 }
 
-// Kosongkan semua
+function renderCart() {
+    const keys = Object.keys(cart);
+    const list = document.getElementById('opItems'), summary = document.getElementById('opSummary');
+    const count = document.getElementById('opCount'), btn = document.getElementById('btnOrder');
+    if (!keys.length) {
+        list.innerHTML = '<div class="empty-cart"><span class="empty-cart-icon">🛒</span>Pilih menu dari kiri</div>';
+        summary.style.display = 'none'; count.textContent = '0 item'; btn.disabled = true; return;
+    }
+    let total = 0, totalQty = 0, html = '';
+    keys.forEach(id => {
+        const item = cart[id], sub = item.price * item.qty;
+        total += sub; totalQty += item.qty;
+        html += `<div class="oi-row"><div class="oi-name">${item.name}</div><div class="oi-qty">${item.qty}x</div><div class="oi-price">Rp ${fmt(sub)}</div><button class="oi-del" onclick="removeItem(${id})">×</button></div>`;
+    });
+    list.innerHTML = html; summary.style.display = 'block';
+    count.textContent = `${totalQty} item`;
+    document.getElementById('subtotalVal').textContent = `Rp ${fmt(total)}`;
+    document.getElementById('totalVal').textContent = `Rp ${fmt(total)}`;
+    btn.disabled = false;
+}
+
 function clearOrder() {
     Object.keys(cart).forEach(id => {
         const el = document.getElementById(`item-${id}`);
-        if (el) {
-            el.classList.remove('selected');
-            document.getElementById(`qty-${id}`).textContent = '1';
-            document.getElementById(`badge-${id}`).textContent = '1';
-        }
+        if (el) { el.classList.remove('selected'); document.getElementById(`qty-${id}`).textContent = '1'; document.getElementById(`badge-${id}`).textContent = '1'; }
     });
-    cart = {};
-    document.getElementById('customerName').value = '';
-    document.getElementById('orderNotes').value   = '';
-    renderCart();
+    cart = {}; document.getElementById('custName').value = ''; document.getElementById('orderNotes').value = ''; renderCart();
 }
 
-// Submit order ke server
 async function submitOrder() {
-    const customerName = document.getElementById('customerName').value.trim();
-    const notes        = document.getElementById('orderNotes').value.trim();
-    const btnOrder     = document.getElementById('btnOrder');
-
-    if (!customerName) {
-        document.getElementById('customerName').focus();
-        document.getElementById('customerName').style.borderColor = '#e53e3e';
-        setTimeout(() => document.getElementById('customerName').style.borderColor = '', 2000);
-        return;
+    const name = document.getElementById('custName').value.trim();
+    const notes = document.getElementById('orderNotes').value.trim();
+    const btn = document.getElementById('btnOrder');
+    if (!name) {
+        const inp = document.getElementById('custName');
+        inp.style.borderColor = '#f87171'; inp.focus();
+        setTimeout(() => inp.style.borderColor = '', 2000); return;
     }
-
-    if (Object.keys(cart).length === 0) return;
-
-    const items = Object.entries(cart).map(([id, item]) => ({
-        product_id: parseInt(id),
-        qty:        item.qty,
-    }));
-
-    btnOrder.disabled    = true;
-    btnOrder.textContent = '⏳ Memproses...';
-
+    if (!Object.keys(cart).length) return;
+    const items = Object.entries(cart).map(([id, item]) => ({ product_id: parseInt(id), qty: item.qty }));
+    btn.disabled = true; btn.textContent = '⏳ Memproses...';
     try {
         const res = await fetch('{{ route("admin.kasir.store") }}', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
-            body: JSON.stringify({ customer_name: customerName, items, notes }),
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ customer_name: name, items, notes }),
         });
-
         const data = await res.json();
-
         if (data.success) {
-            showToast(data.order_code, data.total);
-            clearOrder();
-        } else {
-            alert('Gagal membuat pesanan: ' + (data.message ?? 'Unknown error'));
-        }
-    } catch (err) {
-        alert('Terjadi kesalahan koneksi.');
-    } finally {
-        btnOrder.disabled    = false;
-        btnOrder.innerHTML   = '☕ Buat Pesanan';
-    }
+            document.getElementById('toastSub').textContent = `${data.order_code} · Total: Rp ${fmt(data.total)}`;
+            const toast = document.getElementById('toast');
+            toast.classList.add('show'); clearOrder();
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        } else { alert('Gagal: ' + (data.message ?? 'Error')); }
+    } catch { alert('Terjadi kesalahan koneksi.'); }
+    finally { btn.disabled = false; btn.innerHTML = '☕ Buat Pesanan'; }
 }
 
-// Toast notifikasi sukses
-function showToast(code, total) {
-    const toast = document.getElementById('toast');
-    document.getElementById('toastCode').textContent =
-        `Kode: ${code} · Total: Rp ${formatNum(total)}`;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
-}
-
-// Filter by kategori
 function filterCat(cat, btn) {
-    allCat = cat;
-    document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    filterMenu();
+    activeCat = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); filterMenu();
 }
 
-// Filter by search + kategori
 function filterMenu() {
-    const keyword = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('.menu-item').forEach(el => {
-        const name    = el.dataset.name.toLowerCase();
-        const cat     = el.dataset.cat;
-        const matchCat  = allCat === 'all' || cat === allCat;
-        const matchName = name.includes(keyword);
-        el.style.display = (matchCat && matchName) ? 'block' : 'none';
+    const kw = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.prod-card').forEach(el => {
+        const match = (activeCat === 'all' || el.dataset.cat === activeCat) && el.dataset.name.toLowerCase().includes(kw);
+        el.style.display = match ? 'block' : 'none';
     });
-}
-
-function formatNum(n) {
-    return new Intl.NumberFormat('id-ID').format(n);
 }
 </script>
 @endpush

@@ -36,7 +36,7 @@ return [
     ],
 
     'groq' => [
-        'api_key'    => env('GROQ_API_KEY'),
+        'api_keys'    => env('GROQ_API_KEYS'),
         'model'      => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
         'max_tokens' => (int) env('GROQ_MAX_TOKENS', 1024),
     ],
