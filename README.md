@@ -1,59 +1,179 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ☕ CoffeeShop POS System
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel">
+  <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="TailwindCSS">
+  <img src="https://img.shields.io/badge/Alpine.js-3.x-8BC0D0?style=for-the-badge&logo=alpinedotjs&logoColor=white" alt="Alpine.js">
+  <img src="https://img.shields.io/badge/Vite-7.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
 </p>
 
-## About Laravel
+> Sistem Point-of-Sale (POS) berbasis web untuk kedai kopi, dilengkapi dengan fitur manajemen menu, pencatatan pesanan, laporan penjualan, dan **AI Chatbot** berbasis Groq API untuk membantu pelanggan dan kasir.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Fitur | Deskripsi |
+|---|---|
+| 🧾 **Kasir / POS** | Input pesanan pelanggan secara real-time dengan kalkulasi total otomatis |
+| 📋 **Manajemen Menu** | CRUD produk dan kategori dengan status ketersediaan |
+| 📊 **Laporan Penjualan** | Dashboard statistik dengan grafik revenue harian, top menu terlaris, dan distribusi status pesanan |
+| 🤖 **AI Chatbot** | Asisten virtual berbasis Groq LLM untuk membantu pelanggan memilih menu atau tanya-jawab |
+| ⭐ **Feedback Pelanggan** | Sistem rating dan ulasan dari pelanggan beserta analisis distribusi bintang |
+| 🔐 **Autentikasi** | Login & registrasi menggunakan Laravel Breeze |
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🏗️ Arsitektur & Tech Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+coffeeshop3/
+├── app/
+│   ├── Http/
+│   │   └── Controllers/
+│   │       ├── KasirController.php       # POS / transaksi
+│   │       ├── MenuController.php        # Manajemen menu & kategori
+│   │       ├── OrderController.php       # Status & detail pesanan
+│   │       ├── LaporanController.php     # Dashboard laporan & statistik
+│   │       ├── AiChatController.php      # Endpoint AI chatbot
+│   │       └── ProfileController.php     # Manajemen profil pengguna
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Category.php
+│   │   ├── Product.php
+│   │   ├── Order.php
+│   │   ├── OrderItem.php
+│   │   ├── ChatLog.php
+│   │   └── Feedback.php
+│   └── Services/
+│       └── Agent/
+│           ├── AgentService.php          # Orkestrasi AI agent & tool calling
+│           ├── GroqClient.php            # HTTP client ke Groq API
+│           └── Tools/                   # Tool definitions untuk AI
+├── database/
+│   └── migrations/                      # Skema tabel: users, products, orders, dsb.
+└── resources/
+    └── views/                           # Blade templates
+```
 
-## Laravel Sponsors
+**Backend:** Laravel 12, PHP 8.2+, SQLite  
+**Frontend:** Blade + Tailwind CSS v4, Alpine.js, Vite  
+**AI Integration:** Groq API (LLM) via HTTP Client  
+**Auth:** Laravel Breeze  
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## ⚙️ Cara Instalasi
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Prasyarat
+- PHP >= 8.2
+- Composer
+- Node.js >= 18 & npm
 
-## Contributing
+### Langkah Instalasi
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**1. Clone repository**
+```bash
+git clone https://github.com/khildankahfi/Coffeeshop-sim.git
+cd Coffeeshop-sim
+```
 
-## Code of Conduct
+**2. Install dependensi**
+```bash
+composer install
+npm install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**3. Setup environment**
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+**4. Konfigurasi database & Groq API**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Buka file `.env` dan sesuaikan:
+```env
+DB_CONNECTION=sqlite
 
-## License
+# Groq API Key untuk fitur AI Chatbot
+GROQ_API_KEY=your_groq_api_key_here
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**5. Jalankan migrasi & seeder**
+```bash
+php artisan migrate --seed
+```
+
+**6. Build assets**
+```bash
+npm run build
+```
+
+**7. Jalankan server**
+```bash
+php artisan serve
+```
+
+Atau gunakan perintah dev lengkap (server + queue + logs + vite) sekaligus:
+```bash
+composer dev
+```
+
+Aplikasi akan berjalan di `http://localhost:8000`
+
+---
+
+## 🗄️ Skema Database
+
+```
+users          → Data akun kasir / admin
+categories     → Kategori menu (kopi, non-kopi, makanan, dll.)
+products       → Produk/menu beserta harga dan ketersediaan
+orders         → Transaksi pesanan pelanggan
+order_items    → Detail item dalam setiap pesanan
+ai_chat_logs   → Riwayat percakapan dengan AI chatbot
+feedbacks      → Rating dan ulasan dari pelanggan
+```
+
+---
+
+## 🤖 Fitur AI Chatbot
+
+AI Chatbot ditenagai oleh **Groq API** dengan arsitektur **agentic (tool calling)**:
+
+- Pelanggan / kasir dapat berinteraksi via chat
+- AI dapat menjawab pertanyaan seputar menu, harga, dan ketersediaan produk secara dinamis
+- Histori percakapan disimpan per sesi menggunakan **Laravel Cache**
+- Fallback otomatis jika API tidak merespons
+
+---
+
+## 📊 Dashboard Laporan
+
+Dashboard laporan menyediakan data berdasarkan filter periode:
+
+- **Hari ini** / **7 Hari** / **30 Hari** / **Semua**
+- Total revenue & jumlah pesanan
+- Grafik revenue harian (line chart)
+- Top 5 menu terlaris
+- Distribusi status pesanan (pending / processing / done / cancelled)
+- Rata-rata rating & distribusi bintang pelanggan
+
+---
+
+## 🧪 Testing
+
+```bash
+composer test
+# atau
+php artisan test
+```
+
+---
+
+## 📄 Lisensi
+
+Project ini dibuat sebagai proyek akhir UAS Sistem Informasi Manajemen.
